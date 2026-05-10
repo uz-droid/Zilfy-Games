@@ -17,8 +17,8 @@ if (fs.existsSync(DB_FILE)) {
 function saveDb() { fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2)); }
 
 const baseCatalogItems = [
-  { id: 'hat1', type: 'hat', name: 'Red Cap', img: '🧢', colour: '#ff0000', model: 'cap' },
-  { id: 'hat2', type: 'hat', name: 'Crown', img: '👑', colour: '#ffd700', model: 'crown' },
+  { id: 'hat1', type: 'hat', name: 'Red Cap', img: '🧢', colour: '#ff0000' },
+  { id: 'hat2', type: 'hat', name: 'Crown', img: '👑', colour: '#ffd700' },
   { id: 'face1', type: 'face', name: 'Smile', img: '😊' },
   { id: 'face2', type: 'face', name: 'Cool', img: '😎' },
   { id: 'body_red', type: 'body', name: 'Red Body', colour: '#ff4444' },
@@ -27,19 +27,20 @@ const baseCatalogItems = [
   { id: 'body_yellow', type: 'body', name: 'Yellow Body', colour: '#ffff44' },
 ];
 
+// Normalize users
 Object.values(db.users).forEach(u => {
   u.friends = u.friends || [];
-  u.following = u.following || [];
+  u.friendRequests = u.friendRequests || [];  // { from, timestamp }
   u.equippedItems = u.equippedItems || [];
   u.online = false;
 });
 
 let gameIdCounter = db.games.length ? Math.max(...db.games.map(g=>g.id)) + 1 : 1;
 
-// ========== Active rooms ==========
+// Active rooms
 const activeRooms = new Map();
 
-// Pre‑built starter 2D games (always available)
+// Starter 2D games
 const starter2DGames = [
   {
     id: 'obby',
@@ -50,7 +51,7 @@ const starter2DGames = [
       { id: '2', position: {x:300, y:350}, color: '#ff44ff', width:20, height:150 },
       { id: '3', position: {x:500, y:400}, color: '#ffaa00', width:20, height:50 },
       { id: '4', position: {x:600, y:200}, color: '#ff4444', width:200, height:20 }
-    ]
+    ],
   },
   {
     id: 'tycoon',
@@ -60,8 +61,8 @@ const starter2DGames = [
       { id: 't1', position: {x:200, y:300}, color: '#ffff44', width:60, height:60 },
       { id: 't2', position: {x:400, y:100}, color: '#ffff44', width:60, height:60 },
       { id: 't3', position: {x:600, y:450}, color: '#ffff44', width:60, height:60 },
-      { id: 't4', position: {x:100, y:100}, color: '#ffff44', width:60, height:60 }
-    ]
+      { id: 't4', position: {x:100, y:100}, color: '#ffff44', width:60, height:60 },
+    ],
   },
   {
     id: 'paintball',
@@ -71,34 +72,25 @@ const starter2DGames = [
       { id: 'p1', position: {x:50, y:50}, color: '#22cc22', width:10, height:500 },
       { id: 'p2', position: {x:750, y:50}, color: '#22cc22', width:10, height:500 },
       { id: 'p3', position: {x:50, y:50}, color: '#22cc22', width:700, height:10 },
-      { id: 'p4', position: {x:50, y:550}, color: '#22cc22', width:700, height:10 }
-    ]
-  }
+      { id: 'p4', position: {x:50, y:550}, color: '#22cc22', width:700, height:10 },
+    ],
+  },
 ];
 
-// Lobby rooms
+// Ensure lobbies
 function ensureRoom(name, type) {
   if (!activeRooms.has(name)) {
-    activeRooms.set(name, {
-      type,
-      players: new Map(),
-      blockData: type === '3d' ? [] : undefined,
-      tileData: type === '2d' ? [] : undefined
-    });
+    activeRooms.set(name, { type, players: new Map(), blockData: type==='3d'?[]:undefined, tileData: type==='2d'?[]:undefined });
   }
 }
 ensureRoom('lobby_2d', '2d');
 ensureRoom('lobby_3d', '3d');
 
-// Populate starter 2D games into rooms (do it once)
+// Inject starter rooms
 starter2DGames.forEach(g => {
   const roomName = 'starter_' + g.id;
   if (!activeRooms.has(roomName)) {
-    activeRooms.set(roomName, {
-      type: '2d',
-      players: new Map(),
-      tileData: JSON.parse(JSON.stringify(g.tileData))
-    });
+    activeRooms.set(roomName, { type: '2d', players: new Map(), tileData: JSON.parse(JSON.stringify(g.tileData)) });
   }
 });
 
@@ -121,12 +113,7 @@ function getUserAvatar(username) {
 function getActiveRoomList() {
   return Array.from(activeRooms.keys()).map(name => {
     const room = activeRooms.get(name);
-    return {
-      name,
-      type: room.type,
-      playerCount: room.players.size,
-      isStarter: name.startsWith('starter_')
-    };
+    return { name, type: room.type, playerCount: room.players.size, isStarter: name.startsWith('starter_') };
   });
 }
 
@@ -144,11 +131,12 @@ io.on('connection', (socket) => {
     socket.emit('loginSuccess', {
       username,
       friends: db.users[username].friends,
+      friendRequests: db.users[username].friendRequests,
       games: db.games,
       catalogItems: allCatalog,
       equipped: db.users[username].equippedItems || [],
       activeRooms: getActiveRoomList(),
-      starter2D: starter2DGames.map(g => ({ id: g.id, name: g.name, description: g.description }))
+      starter2D: starter2DGames.map(g => ({ id: g.id, name: g.name, description: g.description })),
     });
     notifyFriends(username, 'friendOnline');
     saveDb();
@@ -158,37 +146,79 @@ io.on('connection', (socket) => {
     if (db.users[username]) return socket.emit('signupError', 'Username taken');
     db.users[username] = {
       password, online: true, socketId: socket.id,
-      friends: [], equippedItems: ['body_red']
+      friends: [], friendRequests: [], equippedItems: ['body_red'],
     };
     socket.username = username;
     const allCatalog = [...baseCatalogItems, ...db.customItems];
     socket.emit('loginSuccess', {
       username,
       friends: [],
+      friendRequests: [],
       games: db.games,
       catalogItems: allCatalog,
       equipped: ['body_red'],
       activeRooms: getActiveRoomList(),
-      starter2D: starter2DGames.map(g => ({ id: g.id, name: g.name, description: g.description }))
+      starter2D: starter2DGames.map(g => ({ id: g.id, name: g.name, description: g.description })),
     });
     saveDb();
   });
 
-  // Friends
+  // Friend requests
+  socket.on('sendFriendRequest', toUser => {
+    if (!socket.username) return;
+    if (db.users[toUser]) {
+      if (db.users[toUser].friendRequests.find(r => r.from === socket.username)) return;
+      db.users[toUser].friendRequests.push({ from: socket.username, timestamp: Date.now() });
+      if (db.users[toUser].online) {
+        io.to(db.users[toUser].socketId).emit('friendRequestReceived', { from: socket.username });
+      }
+      saveDb();
+    }
+  });
+
+  socket.on('acceptFriendRequest', fromUser => {
+    if (!socket.username) return;
+    const user = db.users[socket.username];
+    if (!user) return;
+    user.friendRequests = user.friendRequests.filter(r => r.from !== fromUser);
+    if (!user.friends.includes(fromUser)) user.friends.push(fromUser);
+    const other = db.users[fromUser];
+    if (other && !other.friends.includes(socket.username)) other.friends.push(socket.username);
+    // Notify both
+    socket.emit('friendAdded', fromUser);
+    if (other && other.online) io.to(other.socketId).emit('friendAdded', socket.username);
+    socket.emit('friendRequestsUpdate', user.friendRequests);
+    saveDb();
+  });
+
+  socket.on('declineFriendRequest', fromUser => {
+    if (!socket.username) return;
+    const user = db.users[socket.username];
+    if (!user) return;
+    user.friendRequests = user.friendRequests.filter(r => r.from !== fromUser);
+    socket.emit('friendRequestsUpdate', user.friendRequests);
+    saveDb();
+  });
+
+  // Profile
+  socket.on('getProfile', username => {
+    const user = db.users[username];
+    if (!user) return;
+    const avatar = getUserAvatar(username);
+    socket.emit('profileData', {
+      username,
+      online: user.online,
+      friends: user.friends,
+      equipped: user.equippedItems,
+      avatar,
+      friendCount: user.friends.length,
+    });
+  });
+
+  // Search
   socket.on('searchUser', term => {
     const results = Object.keys(db.users).filter(u => u.includes(term) && u !== socket.username);
     socket.emit('searchResults', results);
-  });
-  socket.on('addFriend', friendName => {
-    const user = db.users[socket.username], friend = db.users[friendName];
-    if (!user || !friend) return;
-    if (!user.friends.includes(friendName)) {
-      user.friends.push(friendName);
-      if (!friend.friends.includes(socket.username)) friend.friends.push(socket.username);
-      if (friend.online) io.to(friend.socketId).emit('friendAdded', socket.username);
-      socket.emit('friendAdded', friendName);
-      saveDb();
-    }
   });
 
   // Game creation
@@ -203,7 +233,7 @@ io.on('connection', (socket) => {
     if (idx !== -1) { db.games.splice(idx, 1); io.emit('gameDeleted', gameId); saveDb(); }
   });
 
-  // Host a game from creation
+  // Host game
   socket.on('hostGame', gameId => {
     const game = db.games.find(g => g.id === gameId);
     if (!game) return;
@@ -230,11 +260,11 @@ io.on('connection', (socket) => {
     const playerData = {
       id: socket.id,
       username: socket.username,
-      x: room.type==='2d' ? 400 : Math.random()*10,
+      x: room.type==='2d' ? 400 : (Math.random()*10),
       y: room.type==='2d' ? 300 : 0,
-      z: room.type==='3d' ? Math.random()*10 : undefined,
+      z: room.type==='3d' ? (Math.random()*10) : undefined,
       dir: 'down',
-      avatar
+      avatar,
     };
     room.players.set(socket.id, playerData);
     socket.emit('roomJoined', {
@@ -243,7 +273,7 @@ io.on('connection', (socket) => {
       players: Array.from(room.players.values()),
       blockData: room.blockData || [],
       tileData: room.tileData || [],
-      isStarter: roomName.startsWith('starter_')
+      isStarter: roomName.startsWith('starter_'),
     });
     socket.to(roomName).emit('playerJoined', playerData);
     socket.currentRoom = roomName;
@@ -269,7 +299,7 @@ io.on('connection', (socket) => {
     socket.to(socket.currentRoom).emit('playerMoved2D', { id: socket.id, x, y, dir });
   });
 
-  // Building (2D tiles / 3D blocks)
+  // Building
   socket.on('placeBlock', ({ position, color, type: bType }) => {
     const room = activeRooms.get(socket.currentRoom);
     if (!room || room.type !== '3d') return;
@@ -283,11 +313,10 @@ io.on('connection', (socket) => {
     room.blockData = room.blockData.filter(b => b.id !== blockId);
     io.to(socket.currentRoom).emit('blockRemoved', blockId);
   });
-
-  socket.on('placeTile', ({ position, color, width=20, height=20 }) => {
+  socket.on('placeTile', ({ position, color, width, height }) => {
     const room = activeRooms.get(socket.currentRoom);
     if (!room || room.type !== '2d') return;
-    const tile = { id: Date.now() + Math.random(), position, color, width, height };
+    const tile = { id: Date.now() + Math.random(), position, color, width: width||20, height: height||20 };
     room.tileData.push(tile);
     io.to(socket.currentRoom).emit('tilePlaced', tile);
   });
@@ -301,21 +330,16 @@ io.on('connection', (socket) => {
   // Chat
   socket.on('chatMessage', ({ message, roomName }) => {
     if (!roomName || !activeRooms.has(roomName)) return;
-    io.to(roomName).emit('chatMessage', {
-      sender: socket.username,
-      message,
-      timestamp: Date.now()
-    });
+    io.to(roomName).emit('chatMessage', { sender: socket.username, message, timestamp: Date.now() });
   });
 
-  // Equip
+  // Equip items
   socket.on('equipItem', itemId => {
     if (!db.users[socket.username]) return;
     if (!db.users[socket.username].equippedItems.includes(itemId)) {
       db.users[socket.username].equippedItems.push(itemId);
       socket.emit('equippedUpdate', db.users[socket.username].equippedItems);
       saveDb();
-      // Broadcast avatar update in room
       const room = activeRooms.get(socket.currentRoom);
       if (room) {
         const avatar = getUserAvatar(socket.username);
