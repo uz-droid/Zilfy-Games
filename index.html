@@ -2,114 +2,151 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>ZILFYGAMES</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
-    * { margin:0; padding:0; box-sizing:border-box; font-family: 'Inter', sans-serif; }
+    * { margin:0; padding:0; box-sizing:border-box; font-family: 'Inter', system-ui, sans-serif; }
     body {
-      background: #0a0a10; color:#f0f0f0; overflow:hidden; height:100vh;
+      background: radial-gradient(ellipse at center, #1a1a2e 0%, #0a0a10 100%);
+      color: #f0f0f0; min-height:100vh; overflow:hidden;
     }
-    /* Glowing UI */
-    .glow { box-shadow: 0 0 15px rgba(255,70,70,0.3), inset 0 0 15px rgba(255,70,70,0.1); border: 1px solid rgba(255,70,70,0.2); }
-    .neon-text { text-shadow: 0 0 10px rgba(255,70,70,0.5); }
-    button, input, textarea { outline:none; border:none; }
+    /* Glowing utilities */
+    .glow { box-shadow: 0 0 20px rgba(255,70,70,0.3), inset 0 0 20px rgba(255,70,70,0.05); }
+    .neon-text { text-shadow: 0 0 15px rgba(255,70,70,0.6); }
+    button, input, textarea { outline:none; border:none; font-family: inherit; }
     input, textarea {
-      background: rgba(255,255,255,0.05); color:white; padding:12px;
-      border-radius:12px; border:1px solid rgba(255,255,255,0.1); font-size:14px;
-      transition: 0.2s;
+      background: rgba(255,255,255,0.05); color:white; padding:12px 16px;
+      border-radius:12px; border:1px solid rgba(255,255,255,0.12);
+      font-size:14px; transition:0.2s;
     }
-    input:focus, textarea:focus { border-color: #ff4d4d; box-shadow: 0 0 15px rgba(255,70,70,0.3); }
+    input:focus, textarea:focus { border-color: #ff4d4d; box-shadow: 0 0 15px rgba(255,70,70,0.25); }
     button {
-      background: linear-gradient(135deg, #ff4d4d, #cc0000); color:white; font-weight:bold;
+      background: linear-gradient(135deg, #ff4d4d, #cc0000); color:white; font-weight:600;
       padding:12px 24px; border-radius:12px; cursor:pointer; font-size:14px;
-      box-shadow: 0 0 15px rgba(255,70,70,0.3); transition: 0.2s;
+      box-shadow: 0 4px 15px rgba(255,70,70,0.35); transition: all 0.2s;
     }
-    button:hover { transform: translateY(-2px); box-shadow: 0 0 25px rgba(255,70,70,0.5); }
-    button.secondary { background: rgba(255,255,255,0.1); box-shadow: none; }
+    button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,70,70,0.5); }
+    button.secondary { background: rgba(255,255,255,0.08); box-shadow: none; }
+    button.secondary:hover { background: rgba(255,255,255,0.12); }
+    .card {
+      background: rgba(20,20,30,0.65); backdrop-filter: blur(20px); border-radius:16px;
+      padding:20px; border:1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
 
+    #loginScreen, #app, #gameContainer2D, #gameContainer3D { width:100vw; height:100vh; }
     #loginScreen {
-      position:fixed; inset:0; background: #0a0a10; display:flex;
-      align-items:center; justify-content:center; z-index:999;
+      display:flex; align-items:center; justify-content:center;
+      background: radial-gradient(circle, #1a1a2e, #0a0a10);
     }
     .login-box {
-      background: rgba(20,20,30,0.8); backdrop-filter: blur(20px);
-      border-radius:24px; padding:40px; width:380px; border:1px solid rgba(255,70,70,0.3);
+      background: rgba(15,15,25,0.85); backdrop-filter: blur(30px); border-radius:24px;
+      padding:45px; width:400px; border:1px solid rgba(255,70,70,0.25);
       box-shadow: 0 0 40px rgba(255,70,70,0.2);
     }
-    .login-box h2 { color:#ff4d4d; margin-bottom:20px; font-size:28px; }
-    .login-box input { width:100%; margin:8px 0; }
-    .error { color:#ff6b6b; font-size:13px; min-height:20px; }
+    .login-box h2 { color:#ff4d4d; margin-bottom:25px; font-size:32px; font-weight:700; }
 
-    #app { display:none; height:100vh; flex-direction: column; }
+    #app { display:none; flex-direction:column; }
     .topbar {
-      height:56px; background: rgba(15,15,25,0.9); backdrop-filter: blur(10px);
-      display:flex; align-items:center; padding:0 20px; border-bottom:1px solid rgba(255,70,70,0.3);
+      height:60px; background: rgba(12,12,20,0.85); backdrop-filter: blur(20px);
+      display:flex; align-items:center; padding:0 25px;
+      border-bottom:1px solid rgba(255,70,70,0.3);
     }
-    .logo { font-weight:700; font-size:20px; color:#ff4d4d; margin-right:30px; letter-spacing:2px; }
-    .tabs { display:flex; gap:8px; }
+    .logo { font-weight:800; font-size:22px; color:#ff4d4d; margin-right:35px; letter-spacing:1px; }
+    .tabs { display:flex; gap:6px; }
     .tab {
-      padding:8px 20px; border-radius:20px; cursor:pointer; font-weight:500;
-      font-size:13px; color:#ccc; transition:0.2s; background:rgba(255,255,255,0.05);
+      padding:8px 18px; border-radius:20px; cursor:pointer; font-weight:600;
+      font-size:13px; color:#ccc; background:rgba(255,255,255,0.05);
+      transition:0.2s;
     }
-    .tab.active, .tab:hover { background:rgba(255,70,70,0.2); color:white; box-shadow: 0 0 12px rgba(255,70,70,0.3); }
-    .userarea { margin-left:auto; display:flex; align-items:center; gap:12px; }
-    #logoutBtn { background:transparent; border:1px solid rgba(255,255,255,0.2); padding:6px 14px; }
+    .tab.active, .tab:hover { background:rgba(255,70,70,0.25); color:white; box-shadow: 0 0 12px rgba(255,70,70,0.3); }
+    .userarea { margin-left:auto; display:flex; align-items:center; gap:14px; }
+    #avatarMini { border-radius:10px; border:2px solid rgba(255,255,255,0.2); }
+    #logoutBtn { background:transparent; border:1px solid rgba(255,255,255,0.2); padding:6px 14px; font-size:13px; }
 
     .content { flex:1; display:flex; overflow:hidden; }
-    .sidebar { width:280px; background:rgba(15,15,25,0.8); backdrop-filter:blur(10px); border-right:1px solid rgba(255,70,70,0.2); padding:20px; overflow-y:auto; }
-    .main { flex:1; padding:20px; overflow-y:auto; }
-
-    .card {
-      background:rgba(20,20,30,0.6); backdrop-filter:blur(10px); border-radius:16px;
-      padding:20px; margin-bottom:16px; border:1px solid rgba(255,255,255,0.1);
+    /* Sidebar in home tab only */
+    #view-home { display:flex; }
+    .sidebar {
+      width:280px; background:rgba(15,15,25,0.7); backdrop-filter:blur(15px);
+      border-right:1px solid rgba(255,70,70,0.2); padding:20px; overflow-y:auto;
     }
-    .list-item { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05); }
+    .main { flex:1; padding:25px; overflow-y:auto; }
+
+    .list-item { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
     .online-dot { width:10px; height:10px; border-radius:50%; background:#4caf50; margin-right:8px; }
     .offline-dot { background:#555; }
 
+    /* Game overlays */
     #gameContainer2D, #gameContainer3D {
-      position:fixed; inset:0; z-index:100; display:none;
+      position:fixed; top:0; left:0; z-index:200; display:none;
+      background: #111118;
     }
-    #gameCanvas2D { display:block; background:#222; }
-    #gameCanvas3D { display:block; }
-    .game-hud { position:absolute; top:10px; left:10px; background:rgba(0,0,0,0.7); color:white; padding:8px 16px; border-radius:8px; z-index:101; }
-    #leaveGameBtn { position:absolute; top:10px; right:10px; z-index:101; }
+    .game-hud {
+      position:absolute; top:15px; left:15px; background:rgba(0,0,0,0.7); color:white;
+      padding:8px 16px; border-radius:10px; z-index:10; font-size:14px;
+    }
+    .leave-game-btn {
+      position:absolute; top:15px; right:15px; z-index:10;
+      background: rgba(255,70,70,0.8); border:none; color:white;
+      padding:8px 16px; border-radius:8px; cursor:pointer;
+    }
+    .chat-container {
+      position:absolute; bottom:80px; left:15px; width:300px; max-height:250px;
+      background:rgba(0,0,0,0.7); border-radius:12px; padding:10px;
+      display:flex; flex-direction:column; z-index:10;
+      overflow-y:auto; font-size:13px; color:white;
+    }
+    .chat-message { margin:3px 0; }
+    .chat-input-row {
+      position:absolute; bottom:15px; left:15px; right:100px; display:flex; gap:10px; z-index:10;
+    }
+    .chat-input-row input {
+      flex:1; background:rgba(0,0,0,0.8); color:white; border:1px solid rgba(255,255,255,0.2);
+      padding:8px 12px; border-radius:8px;
+    }
     .build-panel {
-      position:absolute; bottom:20px; left:20px; background:rgba(0,0,0,0.8); padding:12px;
-      border-radius:12px; display:none; z-index:101; gap:8px; flex-wrap:wrap;
+      position:absolute; bottom:15px; right:15px; display:flex; gap:8px; z-index:10;
+      background:rgba(0,0,0,0.8); padding:10px; border-radius:12px;
     }
-    .color-swatch { width:30px; height:30px; border-radius:6px; cursor:pointer; border:2px solid transparent; }
-    .color-swatch.selected { border-color:#ff4d4d; box-shadow: 0 0 12px #ff4d4d; }
+    .color-swatch { width:28px; height:28px; border-radius:8px; cursor:pointer; border:2px solid transparent; }
+    .color-swatch.selected { border-color:#ff4d4d; box-shadow:0 0 10px #ff4d4d; }
+
+    /* 3D container */
+    #threeContainer { width:100%; height:100%; display:block; }
+    canvas { display:block; }
   </style>
 </head>
 <body>
+  <!-- Login screen -->
   <div id="loginScreen">
     <div class="login-box">
-      <h2 id="loginTitle">LOGIN</h2>
-      <input id="loginUser" placeholder="Username">
+      <h2 class="neon-text">ZILFYGAMES</h2>
+      <input id="loginUser" placeholder="Username" autocomplete="off">
       <input id="loginPass" type="password" placeholder="Password">
-      <div class="error" id="loginError"></div>
-      <button id="loginBtn" style="width:100%; margin-top:10px;">LAUNCH</button>
-      <p style="text-align:center; margin-top:14px; font-size:13px; color:#aaa;">
-        <span id="toggleLink" style="cursor:pointer;">New? Create account</span>
+      <div class="error" id="loginError" style="color:#ff6b6b; font-size:13px; min-height:20px; margin:5px 0;"></div>
+      <button id="loginBtn" style="width:100%; margin-top:12px;">LAUNCH</button>
+      <p style="text-align:center; margin-top:18px; font-size:13px; color:#aaa;">
+        <span id="toggleLink" style="cursor:pointer; color:#ff4d4d;">No account? Sign up</span>
       </p>
     </div>
   </div>
 
+  <!-- Main app -->
   <div id="app">
     <div class="topbar">
       <div class="logo neon-text">ZILFYGAMES</div>
       <div class="tabs">
         <div class="tab active" data-tab="home">🏠 Home</div>
-        <div class="tab" data-tab="2d">🕹️ 2D World</div>
-        <div class="tab" data-tab="3d">🌍 3D World</div>
+        <div class="tab" data-tab="2d">🕹️ 2D Worlds</div>
+        <div class="tab" data-tab="3d">🌍 3D Worlds</div>
         <div class="tab" data-tab="create">✨ Create</div>
         <div class="tab" data-tab="catalog">👕 Catalog</div>
       </div>
       <div class="userarea">
-        <canvas id="avatarMini" width="32" height="32" style="border-radius:8px;"></canvas>
-        <span id="displayName" style="font-weight:bold;"></span>
+        <canvas id="avatarMini" width="32" height="32"></canvas>
+        <span id="displayName" style="font-weight:700;"></span>
         <button id="logoutBtn" class="secondary">Exit</button>
       </div>
     </div>
@@ -118,55 +155,57 @@
       <!-- Home Tab -->
       <div class="tab-view" id="view-home" style="display:flex; width:100%;">
         <div class="sidebar">
-          <h3 style="margin-bottom:10px;">Search Users</h3>
+          <h3 style="margin-bottom:12px;">Search Users</h3>
           <input id="friendSearch" placeholder="Username...">
-          <div id="searchResults" style="margin-top:10px;"></div>
+          <div id="searchResults" style="margin-top:12px;"></div>
         </div>
         <div class="main">
-          <h2>Friends</h2>
+          <h2 style="margin-bottom:20px;">Friends</h2>
           <div id="friendsList"></div>
         </div>
       </div>
 
-      <!-- 2D World Tab -->
-      <div class="tab-view" id="view-2d" style="display:none; padding:20px; width:100%;">
-        <h2>2D Game Lobbies</h2>
+      <!-- 2D Worlds Tab -->
+      <div class="tab-view" id="view-2d" style="display:none; padding:25px; width:100%; overflow-y:auto;">
+        <h2 style="margin-bottom:15px;">Starter 2D Games</h2>
+        <div id="starter2DList" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:15px; margin-bottom:30px;"></div>
+        <h2 style="margin-bottom:15px;">Active 2D Lobbies</h2>
         <div id="2dRoomsList"></div>
-        <button onclick="socket.emit('joinRoom','2d_lobby')" style="margin-top:10px;">Join 2D Lobby</button>
+        <button class="secondary" onclick="socket.emit('joinRoom','lobby_2d')" style="margin-top:15px;">Public 2D Lobby</button>
       </div>
 
-      <!-- 3D World Tab -->
-      <div class="tab-view" id="view-3d" style="display:none; padding:20px; width:100%;">
-        <h2>3D Game Lobbies</h2>
+      <!-- 3D Worlds Tab -->
+      <div class="tab-view" id="view-3d" style="display:none; padding:25px; width:100%;">
+        <h2 style="margin-bottom:15px;">Active 3D Lobbies</h2>
         <div id="3dRoomsList"></div>
-        <button onclick="socket.emit('joinRoom','3d_lobby')" style="margin-top:10px;">Join 3D Lobby</button>
+        <button class="secondary" onclick="socket.emit('joinRoom','lobby_3d')" style="margin-top:15px;">Public 3D Lobby</button>
       </div>
 
       <!-- Create Tab -->
-      <div class="tab-view" id="view-create" style="display:none; padding:20px; width:100%;">
+      <div class="tab-view" id="view-create" style="display:none; padding:25px; width:100%;">
         <div class="card">
           <h3>Create New Game</h3>
-          <input id="newGameName" placeholder="Game Name" style="width:100%; margin:10px 0;">
-          <div style="display:flex; gap:10px; margin:10px 0;">
+          <input id="newGameName" placeholder="Game Name" style="width:100%; margin:12px 0;">
+          <div style="display:flex; gap:15px; margin:12px 0;">
             <label><input type="radio" name="gameType" value="3d" checked> 3D World</label>
             <label><input type="radio" name="gameType" value="2d"> 2D World</label>
           </div>
-          <textarea id="newGameCode" placeholder="Optional Lua code..." rows="5" style="width:100%; margin:10px 0;"></textarea>
+          <textarea id="newGameCode" rows="4" placeholder="Optional Lua code..." style="width:100%; margin:12px 0;"></textarea>
           <button id="createGameBtn">Publish Game</button>
         </div>
-        <div class="card">
+        <div class="card" style="margin-top:20px;">
           <h3>Your Published Games</h3>
           <div id="myGamesList"></div>
         </div>
       </div>
 
       <!-- Catalog Tab -->
-      <div class="tab-view" id="view-catalog" style="display:none; padding:20px; width:100%;">
-        <h2>Avatar Catalog</h2>
-        <div id="catalogGrid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(100px,1fr)); gap:10px;"></div>
-        <h2 style="margin-top:20px;">Preview</h2>
-        <canvas id="avatarPreview3D" width="100" height="100" style="border-radius:12px; background:#222;"></canvas>
-        <button id="resetAvatarBtn" class="secondary" style="margin-top:10px;">Unequip All</button>
+      <div class="tab-view" id="view-catalog" style="display:none; padding:25px; width:100%;">
+        <h2 style="margin-bottom:15px;">Avatar Catalog</h2>
+        <div id="catalogGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(110px,1fr)); gap:12px;"></div>
+        <h2 style="margin-top:25px;">Preview</h2>
+        <canvas id="avatarPreview3D" width="120" height="120" style="border-radius:12px; background:#1a1a2e; margin:10px 0;"></canvas>
+        <button id="resetAvatarBtn" class="secondary">Unequip All</button>
       </div>
     </div>
   </div>
@@ -174,28 +213,37 @@
   <!-- 2D Game Overlay -->
   <div id="gameContainer2D">
     <div class="game-hud" id="hud2D">Players: 0</div>
-    <button id="leaveGame2D" class="secondary">Leave</button>
-    <canvas id="gameCanvas2D" width="800" height="600"></canvas>
+    <button class="leave-game-btn" id="leaveGame2D">Leave Game</button>
+    <div class="chat-container" id="chatDisplay2D"></div>
+    <div class="chat-input-row">
+      <input id="chatInput2D" placeholder="Chat..." autocomplete="off">
+      <button id="sendChat2D" style="padding:8px 12px;">Send</button>
+    </div>
     <div class="build-panel" id="buildPanel2D">
       <div class="color-swatch" style="background:red" data-color="red"></div>
       <div class="color-swatch" style="background:blue" data-color="blue"></div>
       <div class="color-swatch" style="background:green" data-color="green"></div>
-      <button id="toggleBuild2D" class="secondary">Build Mode</button>
+      <button id="toggleBuild2D" class="secondary" style="margin-left:8px;">Build</button>
     </div>
+    <canvas id="gameCanvas2D" width="800" height="600" style="width:100%; height:100%;"></canvas>
   </div>
 
   <!-- 3D Game Overlay -->
   <div id="gameContainer3D">
     <div class="game-hud" id="hud3D">Players: 0</div>
-    <button id="leaveGame3D" class="secondary">Leave</button>
-    <div id="threeContainer" style="width:100%; height:100%;"></div>
-    <div class="build-panel" id="buildPanel3D">
-      <div class="color-swatch" style="background:red" data-color="#ff4d4d"></div>
-      <div class="color-swatch" style="background:blue" data-color="#4d4dff"></div>
-      <div class="color-swatch" style="background:green" data-color="#4dff4d"></div>
-      <div class="color-swatch" style="background:yellow" data-color="#ffff4d"></div>
-      <button id="toggleBuild3D" class="secondary">Build Mode</button>
+    <button class="leave-game-btn" id="leaveGame3D">Leave Game</button>
+    <div class="chat-container" id="chatDisplay3D"></div>
+    <div class="chat-input-row">
+      <input id="chatInput3D" placeholder="Chat..." autocomplete="off">
+      <button id="sendChat3D" style="padding:8px 12px;">Send</button>
     </div>
+    <div class="build-panel" id="buildPanel3D">
+      <div class="color-swatch" style="background:#ff4d4d" data-color="#ff4d4d"></div>
+      <div class="color-swatch" style="background:#4d4dff" data-color="#4d4dff"></div>
+      <div class="color-swatch" style="background:#4dff4d" data-color="#4dff4d"></div>
+      <button id="toggleBuild3D" class="secondary" style="margin-left:8px;">Build</button>
+    </div>
+    <div id="threeContainer"></div>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
@@ -209,11 +257,12 @@
     let activeTab = 'home';
     let current2DRoom = null, current3DRoom = null;
     let players2D = {}, players3D = {};
+    let tileData2D = [], blockData3D = [];
     let keys = {};
     window.addEventListener('keydown', e => keys[e.key] = true);
     window.addEventListener('keyup', e => keys[e.key] = false);
 
-    // DOM
+    // DOM elements
     const loginScreen = document.getElementById('loginScreen');
     const app = document.getElementById('app');
     const loginUser = document.getElementById('loginUser'), loginPass = document.getElementById('loginPass');
@@ -223,121 +272,165 @@
     const displayName = document.getElementById('displayName');
     const logoutBtn = document.getElementById('logoutBtn');
     const avatarMini = document.getElementById('avatarMini');
-
     const gameContainer2D = document.getElementById('gameContainer2D');
     const gameContainer3D = document.getElementById('gameContainer3D');
-    const gameCanvas2D = document.getElementById('gameCanvas2D'), ctx2D = gameCanvas2D.getContext('2d');
+    const gameCanvas2D = document.getElementById('gameCanvas2D');
+    const ctx2D = gameCanvas2D.getContext('2d');
     const leaveGame2D = document.getElementById('leaveGame2D');
     const leaveGame3D = document.getElementById('leaveGame3D');
-    const buildPanel2D = document.getElementById('buildPanel2D');
-    const buildPanel3D = document.getElementById('buildPanel3D');
     const toggleBuild2D = document.getElementById('toggleBuild2D');
     const toggleBuild3D = document.getElementById('toggleBuild3D');
+    const chatDisplay2D = document.getElementById('chatDisplay2D');
+    const chatInput2D = document.getElementById('chatInput2D');
+    const sendChat2D = document.getElementById('sendChat2D');
+    const chatDisplay3D = document.getElementById('chatDisplay3D');
+    const chatInput3D = document.getElementById('chatInput3D');
+    const sendChat3D = document.getElementById('sendChat3D');
     let buildMode2D = false, buildMode3D = false;
     let selectedColor2D = 'red', selectedColor3D = '#ff4d4d';
 
-    // Auth
-    loginBtn.addEventListener('click',()=>{
-      const u=loginUser.value.trim(), p=loginPass.value.trim();
-      if(!u||!p) return loginError.textContent='Fill all fields';
-      socket.emit(isLogin?'login':'signup',{username:u,password:p});
+    // ========== AUTH ==========
+    loginBtn.addEventListener('click', () => {
+      const u = loginUser.value.trim(), p = loginPass.value.trim();
+      if(!u||!p) return loginError.textContent = 'Fill all fields';
+      socket.emit(isLogin?'login':'signup', {username:u, password:p});
     });
-    toggleLink.addEventListener('click',()=>{ isLogin=!isLogin; loginBtn.textContent=isLogin?'LAUNCH':'CREATE'; toggleLink.textContent=isLogin?'New? Create account':'Have an account? Log in'; });
-    socket.on('loginError',m=>loginError.textContent=m);
-    socket.on('signupError',m=>loginError.textContent=m);
-    socket.on('loginSuccess',data=>{
-      currentUser=data.username; displayName.textContent=currentUser;
-      loginScreen.style.display='none'; app.style.display='flex';
-      allItems=data.catalogItems; equipped=data.equipped||[];
-      allGames=data.games;
+    toggleLink.addEventListener('click', () => {
+      isLogin = !isLogin;
+      loginBtn.textContent = isLogin?'LAUNCH':'CREATE ACCOUNT';
+      toggleLink.textContent = isLogin?'No account? Sign up':'Have an account? Log in';
+    });
+    socket.on('loginError', m => loginError.textContent = m);
+    socket.on('signupError', m => loginError.textContent = m);
+    socket.on('loginSuccess', data => {
+      currentUser = data.username; displayName.textContent = currentUser;
+      loginScreen.style.display = 'none'; app.style.display = 'flex';
+      allItems = data.catalogItems; equipped = data.equipped || [];
+      allGames = data.games || [];
       renderFriends(data.friends);
-      renderAllRooms(data.activeRooms);
+      render2DWorlds(data.activeRooms, data.starter2D);
+      render3DWorlds(data.activeRooms);
       renderCatalog();
       renderMyGames();
       showTab('home');
     });
 
-    logoutBtn.addEventListener('click',()=>{ socket.disconnect(); location.reload(); });
-    tabs.forEach(t=>t.addEventListener('click',()=>showTab(t.dataset.tab)));
-    function showTab(name){
-      tabs.forEach(t=>t.classList.remove('active'));
+    logoutBtn.addEventListener('click', () => { socket.disconnect(); location.reload(); });
+    tabs.forEach(t => t.addEventListener('click', () => showTab(t.dataset.tab)));
+    function showTab(name) {
+      tabs.forEach(t => t.classList.remove('active'));
       document.querySelector(`.tab[data-tab="${name}"]`).classList.add('active');
-      document.querySelectorAll('.tab-view').forEach(v=>v.style.display='none');
-      document.getElementById(`view-${name}`).style.display=(name==='home'?'flex':'block');
+      document.querySelectorAll('.tab-view').forEach(v => v.style.display = 'none');
+      document.getElementById(`view-${name}`).style.display = (name==='home'?'flex':'block');
+      activeTab = name;
       if(name==='create') renderMyGames();
       if(name==='catalog') renderCatalog();
     }
 
-    // Friends
-    const friendSearch=document.getElementById('friendSearch'), searchResults=document.getElementById('searchResults'), friendsList=document.getElementById('friendsList');
-    let friendsArr=[];
-    friendSearch.addEventListener('input',()=>{ const q=friendSearch.value.trim(); if(q.length<1){searchResults.innerHTML='';return;} socket.emit('searchUser',q); });
-    socket.on('searchResults',r=>{ searchResults.innerHTML=r.map(u=>`<div class="list-item"><span>${u}</span><button class="secondary" onclick="addFriend('${u}')">Add</button></div>`).join(''); });
-    window.addFriend=n=>socket.emit('addFriend',n);
-    socket.on('friendAdded',n=>{ if(!friendsArr.includes(n)) friendsArr.push(n); renderFriends(friendsArr); });
-    function renderFriends(arr){ friendsArr=arr; friendsList.innerHTML=arr.length?arr.map(f=>`<div class="list-item"><span><span class="online-dot"></span>${f}</span><button class="secondary" onclick="joinFriend('${f}')">Join</button></div>`).join(''):'<p>No friends yet.</p>'; }
-    window.joinFriend=username=>{ alert('Find their active game in the World tabs!'); };
+    // ========== FRIENDS ==========
+    const friendSearch = document.getElementById('friendSearch'), searchResults = document.getElementById('searchResults'), friendsList = document.getElementById('friendsList');
+    let friendsArr = [];
+    friendSearch.addEventListener('input', () => {
+      const q = friendSearch.value.trim();
+      if(q.length<1) { searchResults.innerHTML=''; return; }
+      socket.emit('searchUser', q);
+    });
+    socket.on('searchResults', r => {
+      searchResults.innerHTML = r.map(u => `<div class="list-item"><span>${u}</span><button class="secondary" onclick="addFriend('${u}')">Add</button></div>`).join('');
+    });
+    window.addFriend = n => socket.emit('addFriend', n);
+    socket.on('friendAdded', n => { if(!friendsArr.includes(n)) friendsArr.push(n); renderFriends(friendsArr); });
+    function renderFriends(arr) { friendsArr=arr; friendsList.innerHTML = arr.length ? arr.map(f=>`<div class="list-item"><span><span class="online-dot"></span>${f}</span></div>`).join('') : '<p>No friends yet.</p>'; }
 
-    // Active rooms list
-    function renderAllRooms(rooms){
-      const twoD = rooms.filter(r=>r.type==='2d');
-      const threeD = rooms.filter(r=>r.type==='3d');
-      document.getElementById('2dRoomsList').innerHTML=twoD.map(r=>`<div class="list-item"><span>${r.name} (${r.playerCount} players)</span><button onclick="socket.emit('joinRoom','${r.name}')">Join</button></div>`).join('')||'No 2D games.';
-      document.getElementById('3dRoomsList').innerHTML=threeD.map(r=>`<div class="list-item"><span>${r.name} (${r.playerCount} players)</span><button onclick="socket.emit('joinRoom','${r.name}')">Join</button></div>`).join('')||'No 3D games.';
+    // ========== ROOMS RENDERING ==========
+    function render2DWorlds(rooms, starter) {
+      // Starter games
+      const starterDiv = document.getElementById('starter2DList');
+      starterDiv.innerHTML = starter.map(g => `
+        <div class="card" style="padding:15px; text-align:center;">
+          <h4>${g.name}</h4>
+          <p style="color:#aaa; font-size:13px; margin:6px 0;">${g.description}</p>
+          <button onclick="socket.emit('joinRoom','starter_${g.id}')">Play</button>
+        </div>
+      `).join('');
+
+      // Active rooms
+      const twoD = rooms.filter(r => r.type==='2d');
+      document.getElementById('2dRoomsList').innerHTML = twoD.map(r => `
+        <div class="list-item"><span>${r.name} (${r.playerCount} players)</span><button onclick="socket.emit('joinRoom','${r.name}')">Join</button></div>
+      `).join('');
     }
-    socket.on('activeRoomsUpdate',rooms=>renderAllRooms(rooms));
+    function render3DWorlds(rooms) {
+      const threeD = rooms.filter(r => r.type==='3d');
+      document.getElementById('3dRoomsList').innerHTML = threeD.map(r => `
+        <div class="list-item"><span>${r.name} (${r.playerCount} players)</span><button onclick="socket.emit('joinRoom','${r.name}')">Join</button></div>
+      `).join('');
+    }
+    socket.on('activeRoomsUpdate', rooms => {
+      render2DWorlds(rooms, window.currentStarter2D);
+      render3DWorlds(rooms);
+    });
 
-    // Create game
-    const newGameName=document.getElementById('newGameName'), newGameCode=document.getElementById('newGameCode'), createGameBtn=document.getElementById('createGameBtn');
-    const myGamesList=document.getElementById('myGamesList');
-    createGameBtn.addEventListener('click',()=>{
-      const name=newGameName.value.trim(), code=newGameCode.value.trim();
-      const type=document.querySelector('input[name="gameType"]:checked').value;
+    // ========== CREATE ==========
+    const newGameName = document.getElementById('newGameName'), newGameCode = document.getElementById('newGameCode');
+    const createGameBtn = document.getElementById('createGameBtn');
+    const myGamesList = document.getElementById('myGamesList');
+    createGameBtn.addEventListener('click', () => {
+      const name = newGameName.value.trim(), code = newGameCode.value.trim();
+      const type = document.querySelector('input[name="gameType"]:checked').value;
       if(!name) return alert('Name required');
-      socket.emit('createGame',{name,code,type});
+      socket.emit('createGame', {name, code, type});
       newGameName.value=''; newGameCode.value='';
     });
-    socket.on('newGame',game=>{ allGames.push(game); renderMyGames(); });
-    socket.on('gameDeleted',id=>{ allGames=allGames.filter(g=>g.id!==id); renderMyGames(); });
-    function renderMyGames(){
-      const own=allGames.filter(g=>g.creator===currentUser);
-      myGamesList.innerHTML=own.length?own.map(g=>`<div class="list-item"><span><strong>${g.name}</strong> (${g.type})</span><div><button onclick="hostGame(${g.id})">Host</button><button class="secondary" onclick="deleteGame(${g.id})">Del</button></div></div>`).join(''):'<p>No games yet.</p>';
+    socket.on('newGame', game => { allGames.push(game); renderMyGames(); });
+    socket.on('gameDeleted', id => { allGames = allGames.filter(g=>g.id!==id); renderMyGames(); });
+    function renderMyGames() {
+      const own = allGames.filter(g => g.creator === currentUser);
+      myGamesList.innerHTML = own.length ? own.map(g => `
+        <div class="list-item"><span><strong>${g.name}</strong> (${g.type})</span>
+        <div><button onclick="hostGame(${g.id})">Host</button><button class="secondary" onclick="deleteGame(${g.id})">Del</button></div></div>
+      `).join('') : '<p>No games yet.</p>';
     }
-    window.hostGame=id=>socket.emit('hostGame',id);
-    window.deleteGame=id=>socket.emit('deleteGame',id);
+    window.hostGame = id => socket.emit('hostGame', id);
+    window.deleteGame = id => socket.emit('deleteGame', id);
 
-    // Catalog
-    const catalogGrid=document.getElementById('catalogGrid');
-    function renderCatalog(){
-      catalogGrid.innerHTML=allItems.map(item=>`
+    // ========== CATALOG ==========
+    const catalogGrid = document.getElementById('catalogGrid');
+    function renderCatalog() {
+      catalogGrid.innerHTML = allItems.map(item => `
         <div style="background:rgba(255,255,255,0.05); border-radius:12px; padding:12px; text-align:center; cursor:pointer; border:${equipped.includes(item.id)?'2px solid #ff4d4d':'2px solid transparent'}" onclick="toggleItem('${item.id}')">
-          <div style="font-size:28px;">${item.img||'⬛'}</div>
-          <div style="font-size:13px; margin-top:5px;">${item.name}</div>
-        </div>`).join('');
+          <div style="font-size:26px;">${item.img||'⬛'}</div>
+          <div style="font-size:13px; margin-top:6px;">${item.name}</div>
+        </div>
+      `).join('');
       updateAvatarPreview();
     }
-    window.toggleItem=id=>{ if(equipped.includes(id)) socket.emit('unequipItem',id); else socket.emit('equipItem',id); };
-    socket.on('equippedUpdate',eq=>{ equipped=eq; renderCatalog(); });
-    document.getElementById('resetAvatarBtn').addEventListener('click',()=>equipped.forEach(id=>socket.emit('unequipItem',id)));
+    window.toggleItem = id => {
+      if(equipped.includes(id)) socket.emit('unequipItem', id);
+      else socket.emit('equipItem', id);
+    };
+    socket.on('equippedUpdate', eq => { equipped = eq; renderCatalog(); });
+    document.getElementById('resetAvatarBtn').addEventListener('click', () => equipped.forEach(id => socket.emit('unequipItem', id)));
 
-    // Avatar preview (simple 2D canvas)
-    function updateAvatarPreview(){
-      const canvas=document.getElementById('avatarPreview3D');
+    function updateAvatarPreview() {
+      const canvas = document.getElementById('avatarPreview3D');
       if(!canvas) return;
-      const ctx=canvas.getContext('2d'); ctx.clearRect(0,0,100,100);
-      let colour='#cccccc';
-      const bodyItem=allItems.find(i=>equipped.includes(i.id)&&i.type==='body');
-      if(bodyItem) colour=bodyItem.colour;
-      ctx.fillStyle=colour; ctx.fillRect(30,40,40,30); // torso
-      ctx.fillStyle='#ffdbac'; ctx.fillRect(30,5,40,35); // head
-      const faceItem=allItems.find(i=>equipped.includes(i.id)&&i.type==='face');
-      if(faceItem) { ctx.fillStyle='black'; ctx.font='18px sans-serif'; ctx.fillText(faceItem.img,36,28); }
-      const hatItem=allItems.find(i=>equipped.includes(i.id)&&i.type==='hat');
-      if(hatItem){ ctx.fillStyle=hatItem.colour; ctx.fillRect(25,0,50,8); }
+      const ctx = canvas.getContext('2d'); ctx.clearRect(0,0,120,120);
+      let bodyColour = '#cccccc';
+      const bodyItem = allItems.find(i => equipped.includes(i.id) && i.type==='body');
+      if(bodyItem) bodyColour = bodyItem.colour;
+      // Draw simple blocky avatar
+      ctx.fillStyle = bodyColour;
+      ctx.fillRect(40,50,40,25); // torso
+      ctx.fillStyle = '#ffdbac'; // skin head
+      ctx.fillRect(45,20,30,30);
+      const faceItem = allItems.find(i => equipped.includes(i.id) && i.type==='face');
+      if(faceItem){ ctx.fillStyle='black'; ctx.font='16px sans-serif'; ctx.fillText(faceItem.img,48,40); }
+      const hatItem = allItems.find(i => equipped.includes(i.id) && i.type==='hat');
+      if(hatItem){ ctx.fillStyle=hatItem.colour; ctx.fillRect(35,5,50,15); }
     }
 
-    // ========== 2D GAME ==========
-    let tileData2D = [];
+    // ========== 2D GAME LOOP ==========
     socket.on('roomJoined', data => {
       if(data.type === '2d') {
         current2DRoom = data.roomName; players2D = {};
@@ -346,47 +439,45 @@
         gameContainer2D.style.display = 'block';
         gameContainer3D.style.display = 'none';
         document.getElementById('hud2D').textContent = 'Players: 0';
+        chatDisplay2D.innerHTML = '';
         gameLoop2D();
       } else if(data.type === '3d') {
         start3DGame(data);
       }
     });
     socket.on('playerJoined', p => {
-      if(p.id !== socket.id) {
-        if(current2DRoom) players2D[p.id] = p;
-        else if(current3DRoom) add3DPlayer(p);
-      }
+      if(current2DRoom) players2D[p.id] = p;
+      else if(current3DRoom) add3DPlayer(p);
     });
-    socket.on('playerMoved2D', ({id,x,y,dir}) => {
-      if(players2D[id]) Object.assign(players2D[id], {x,y,dir});
-    });
-    socket.on('playerLeft', id => {
-      delete players2D[id];
-      if(current3DRoom) remove3DPlayer(id);
-    });
+    socket.on('playerMoved2D', ({id,x,y,dir}) => { if(players2D[id]) Object.assign(players2D[id],{x,y,dir}); });
+    socket.on('playerLeft', id => { delete players2D[id]; if(current3DRoom) remove3DPlayer(id); });
     socket.on('tilePlaced', tile => { tileData2D.push(tile); });
     socket.on('tileRemoved', tileId => { tileData2D = tileData2D.filter(t => t.id !== tileId); });
+    socket.on('chatMessage', msg => {
+      const display = current2DRoom ? chatDisplay2D : chatDisplay3D;
+      if(display) {
+        display.innerHTML += `<div class="chat-message"><b>${msg.sender}:</b> ${msg.message}</div>`;
+        display.scrollTop = display.scrollHeight;
+      }
+    });
 
-    leaveGame2D.addEventListener('click', ()=>{
-      socket.emit('leaveRoom');
-      current2DRoom = null; gameContainer2D.style.display = 'none';
-    });
-    toggleBuild2D.addEventListener('click', ()=>{
-      buildMode2D = !buildMode2D; toggleBuild2D.textContent = buildMode2D ? 'Build: ON' : 'Build Mode';
-    });
+    leaveGame2D.addEventListener('click', () => { socket.emit('leaveRoom'); current2DRoom=null; gameContainer2D.style.display='none'; });
+    toggleBuild2D.addEventListener('click', () => { buildMode2D = !buildMode2D; toggleBuild2D.textContent = buildMode2D ? 'Build: ON' : 'Build'; });
     document.querySelectorAll('#buildPanel2D .color-swatch').forEach(sw => {
-      sw.addEventListener('click', ()=>{
-        selectedColor2D = sw.dataset.color;
-        document.querySelectorAll('#buildPanel2D .color-swatch').forEach(s=>s.classList.remove('selected'));
-        sw.classList.add('selected');
-      });
+      sw.addEventListener('click', () => { selectedColor2D = sw.dataset.color; document.querySelectorAll('#buildPanel2D .color-swatch').forEach(s=>s.classList.remove('selected')); sw.classList.add('selected'); });
     });
     gameCanvas2D.addEventListener('click', e => {
       if(!buildMode2D || !current2DRoom) return;
       const rect = gameCanvas2D.getBoundingClientRect();
-      const x = e.clientX - rect.left, y = e.clientY - rect.top;
-      socket.emit('placeTile', { position: {x, y}, color: selectedColor2D });
+      const scaleX = 800 / rect.width, scaleY = 600 / rect.height;
+      const x = (e.clientX - rect.left) * scaleX, y = (e.clientY - rect.top) * scaleY;
+      socket.emit('placeTile', { position: {x,y}, color: selectedColor2D, width:20, height:20 });
     });
+    sendChat2D.addEventListener('click', () => {
+      const msg = chatInput2D.value.trim();
+      if(msg && current2DRoom) { socket.emit('chatMessage', { message: msg, roomName: current2DRoom }); chatInput2D.value = ''; }
+    });
+    chatInput2D.addEventListener('keypress', e => { if(e.key==='Enter') sendChat2D.click(); });
 
     function gameLoop2D() {
       if(!current2DRoom) return;
@@ -396,15 +487,14 @@
         if(keys['ArrowRight']) me.x += 3;
         if(keys['ArrowUp']) me.y -= 3;
         if(keys['ArrowDown']) me.y += 3;
-        socket.emit('move2D', { x: me.x, y: me.y, dir: 'down' });
+        if(me.x !== undefined) socket.emit('move2D', { x: me.x, y: me.y, dir: 'down' });
       }
       ctx2D.clearRect(0,0,800,600);
-      tileData2D.forEach(t => {
-        ctx2D.fillStyle = t.color; ctx2D.fillRect(t.position.x, t.position.y, 20, 20);
-      });
+      tileData2D.forEach(t => { ctx2D.fillStyle = t.color; ctx2D.fillRect(t.position.x, t.position.y, t.width||20, t.height||20); });
       Object.values(players2D).forEach(p => {
         ctx2D.fillStyle = p.avatar.bodyColour; ctx2D.fillRect(p.x-12, p.y-12, 24, 24);
-        ctx2D.fillStyle='white'; ctx2D.font='10px sans-serif'; ctx2D.fillText(p.username, p.x-10, p.y-16);
+        ctx2D.fillStyle='#ffdbac'; ctx2D.fillRect(p.x-8, p.y-22, 16, 16);
+        ctx2D.fillStyle='white'; ctx2D.font='10px sans-serif'; ctx2D.fillText(p.username, p.x-15, p.y-16);
       });
       document.getElementById('hud2D').textContent = `Players: ${Object.keys(players2D).length}`;
       requestAnimationFrame(gameLoop2D);
@@ -415,24 +505,78 @@
     let playerMeshes3D = {};
     let blockMeshes3D = [];
     function init3DScene() {
-      const container = document.getElementById('threeContainer');
       scene3D = new THREE.Scene();
       scene3D.background = new THREE.Color(0x1a1a2e);
       camera3D = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-      renderer3D = new THREE.WebGLRenderer();
+      renderer3D = new THREE.WebGLRenderer({ antialias: true });
       renderer3D.setSize(window.innerWidth, window.innerHeight);
-      container.appendChild(renderer3D.domElement);
-      const light = new THREE.AmbientLight(0x404080);
-      scene3D.add(light);
+      renderer3D.shadowMap.enabled = true;
+      document.getElementById('threeContainer').appendChild(renderer3D.domElement);
+      const ambient = new THREE.AmbientLight(0x404080);
+      scene3D.add(ambient);
       const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-      dirLight.position.set(10, 20, 10);
+      dirLight.position.set(10,20,10);
+      dirLight.castShadow = true;
       scene3D.add(dirLight);
       const ground = new THREE.Mesh(
-        new THREE.PlaneGeometry(100, 100),
+        new THREE.PlaneGeometry(100,100),
         new THREE.MeshPhongMaterial({ color: 0x333344 })
       );
       ground.rotation.x = -Math.PI/2;
+      ground.receiveShadow = true;
       scene3D.add(ground);
+    }
+
+    function create3DPlayerMesh(playerData) {
+      const group = new THREE.Group();
+      const bodyGeo = new THREE.BoxGeometry(1, 1.2, 0.6);
+      const bodyMat = new THREE.MeshPhongMaterial({ color: playerData.avatar.bodyColour });
+      const torso = new THREE.Mesh(bodyGeo, bodyMat);
+      torso.castShadow = true; torso.receiveShadow = true;
+      group.add(torso);
+      // Head
+      const headGeo = new THREE.BoxGeometry(0.8,0.8,0.8);
+      const headMat = new THREE.MeshPhongMaterial({ color: 0xffdbac });
+      const head = new THREE.Mesh(headGeo, headMat);
+      head.position.y = 0.75;
+      head.castShadow = true; head.receiveShadow = true;
+      group.add(head);
+      // Face decal (simple plane)
+      if(playerData.avatar.face) {
+        const faceCanvas = document.createElement('canvas');
+        faceCanvas.width=64; faceCanvas.height=64;
+        const fctx = faceCanvas.getContext('2d');
+        fctx.fillStyle = '#ffdbac'; fctx.fillRect(0,0,64,64);
+        fctx.fillStyle = 'black'; fctx.font = '40px sans-serif'; fctx.fillText(playerData.avatar.face.img,8,48);
+        const faceTexture = new THREE.CanvasTexture(faceCanvas);
+        const facePlane = new THREE.Mesh(
+          new THREE.PlaneGeometry(0.5,0.5),
+          new THREE.MeshBasicMaterial({ map: faceTexture, transparent: true })
+        );
+        facePlane.position.set(0,0.75,0.41);
+        group.add(facePlane);
+      }
+      // Hat
+      if(playerData.avatar.hat) {
+        const hatGeo = new THREE.BoxGeometry(0.9,0.2,0.9);
+        const hatMat = new THREE.MeshPhongMaterial({ color: playerData.avatar.hat.colour });
+        const hat = new THREE.Mesh(hatGeo, hatMat);
+        hat.position.y = 1.15;
+        hat.castShadow = true;
+        group.add(hat);
+      }
+      // Arms & legs (simplified)
+      const limbMat = new THREE.MeshPhongMaterial({ color: playerData.avatar.bodyColour });
+      const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.8,0.3), limbMat);
+      leftArm.position.set(-0.65, 0.2, 0); group.add(leftArm);
+      const rightArm = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.8,0.3), limbMat);
+      rightArm.position.set(0.65, 0.2, 0); group.add(rightArm);
+      const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.35,0.8,0.35), limbMat);
+      leftLeg.position.set(-0.25, -0.9, 0); group.add(leftLeg);
+      const rightLeg = new THREE.Mesh(new THREE.BoxGeometry(0.35,0.8,0.35), limbMat);
+      rightLeg.position.set(0.25, -0.9, 0); group.add(rightLeg);
+      group.position.set(playerData.x, playerData.y||0, playerData.z);
+      return group;
     }
 
     function start3DGame(data) {
@@ -440,46 +584,28 @@
       gameContainer3D.style.display = 'block';
       gameContainer2D.style.display = 'none';
       if(!scene3D) init3DScene();
-      camera3D.position.set(0, 10, 15);
-      camera3D.lookAt(0,0,0);
+      // Clear existing
+      while(scene3D.children.length > 4) scene3D.remove(scene3D.children[4]);
+      playerMeshes3D = {}; blockMeshes3D = [];
       data.players.forEach(p => add3DPlayer(p));
       data.blockData.forEach(b => placeBlockMesh(b));
       gameLoop3D();
     }
-
     function add3DPlayer(p) {
-      const group = new THREE.Group();
-      const body = new THREE.Mesh(
-        new THREE.BoxGeometry(1, 1.2, 0.5),
-        new THREE.MeshPhongMaterial({ color: p.avatar.bodyColour })
-      );
-      group.add(body);
-      const head = new THREE.Mesh(
-        new THREE.BoxGeometry(0.8, 0.8, 0.8),
-        new THREE.MeshPhongMaterial({ color: 0xffdbac })
-      );
-      head.position.y = 0.75;
-      group.add(head);
-      if(p.avatar.hat) {
-        const hatGeo = new THREE.BoxGeometry(0.9, 0.2, 0.9);
-        const hatMat = new THREE.MeshPhongMaterial({ color: p.avatar.hat.colour });
-        const hat = new THREE.Mesh(hatGeo, hatMat);
-        hat.position.y = 1.15;
-        group.add(hat);
-      }
-      group.position.set(p.x, p.y, p.z);
-      scene3D.add(group);
-      playerMeshes3D[p.id] = group;
-      if(p.id === socket.id) me3D = group;
+      const mesh = create3DPlayerMesh({...p});
+      scene3D.add(mesh);
+      playerMeshes3D[p.id] = mesh;
+      if(p.id === socket.id) me3D = mesh;
     }
     function remove3DPlayer(id) {
       if(playerMeshes3D[id]) { scene3D.remove(playerMeshes3D[id]); delete playerMeshes3D[id]; }
     }
     function placeBlockMesh(block) {
-      const geo = block.type === 'sphere' ? new THREE.SphereGeometry(0.5) : new THREE.BoxGeometry(1,1,1);
+      const geo = new THREE.BoxGeometry(1,1,1);
       const mat = new THREE.MeshPhongMaterial({ color: block.color });
       const mesh = new THREE.Mesh(geo, mat);
       mesh.position.set(block.position.x, block.position.y, block.position.z);
+      mesh.castShadow = true; mesh.receiveShadow = true;
       mesh.userData.blockId = block.id;
       scene3D.add(mesh);
       blockMeshes3D.push(mesh);
@@ -493,25 +619,20 @@
       if(mesh) { scene3D.remove(mesh); blockMeshes3D = blockMeshes3D.filter(m => m !== mesh); }
     });
     socket.on('avatarUpdate', ({id, avatar}) => {
-      if(playerMeshes3D[id]) { /* Could update colors on the fly */ }
+      if(playerMeshes3D[id]) {
+        // For simplicity, re-create the player mesh (could be optimized)
+        remove3DPlayer(id);
+        const pData = Object.values(players3D).find(p=>p.id===id) || { id, x:0,y:0,z:0, avatar };
+        add3DPlayer({...pData, avatar});
+      }
     });
 
-    leaveGame3D.addEventListener('click', ()=>{
-      socket.emit('leaveRoom');
-      current3DRoom = null;
-      gameContainer3D.style.display = 'none';
-    });
-    toggleBuild3D.addEventListener('click', ()=>{
-      buildMode3D = !buildMode3D; toggleBuild3D.textContent = buildMode3D ? 'Build: ON' : 'Build Mode';
-    });
+    leaveGame3D.addEventListener('click', () => { socket.emit('leaveRoom'); current3DRoom=null; gameContainer3D.style.display='none'; });
+    toggleBuild3D.addEventListener('click', () => { buildMode3D = !buildMode3D; toggleBuild3D.textContent = buildMode3D ? 'Build: ON' : 'Build'; });
     document.querySelectorAll('#buildPanel3D .color-swatch').forEach(sw => {
-      sw.addEventListener('click', ()=>{
-        selectedColor3D = sw.dataset.color;
-        sw.parentElement.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('selected'));
-        sw.classList.add('selected');
-      });
+      sw.addEventListener('click', () => { selectedColor3D = sw.dataset.color; document.querySelectorAll('#buildPanel3D .color-swatch').forEach(s=>s.classList.remove('selected')); sw.classList.add('selected'); });
     });
-    // Raycaster for 3D block placement
+
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
     window.addEventListener('click', e => {
@@ -522,36 +643,50 @@
       const intersects = raycaster.intersectObjects(scene3D.children, true);
       if(intersects.length > 0) {
         const point = intersects[0].point;
-        const pos = { x: Math.round(point.x), y: Math.round(point.y), z: Math.round(point.z) };
-        socket.emit('placeBlock', { position: pos, color: selectedColor3D, type: 'cube' });
+        socket.emit('placeBlock', { position: {x:Math.round(point.x), y:Math.round(point.y), z:Math.round(point.z)}, color: selectedColor3D, type:'cube' });
       }
     });
+    sendChat3D.addEventListener('click', () => {
+      const msg = chatInput3D.value.trim();
+      if(msg && current3DRoom) { socket.emit('chatMessage', { message: msg, roomName: current3DRoom }); chatInput3D.value = ''; }
+    });
+    chatInput3D.addEventListener('keypress', e => { if(e.key==='Enter') sendChat3D.click(); });
 
     function gameLoop3D() {
       if(!current3DRoom) return;
-      const me = Object.values(playerMeshes3D).find(m => m === me3D);
-      if(me) {
-        if(keys['ArrowLeft']) me.position.x -= 0.2;
-        if(keys['ArrowRight']) me.position.x += 0.2;
-        if(keys['ArrowUp']) me.position.z -= 0.2;
-        if(keys['ArrowDown']) me.position.z += 0.2;
-        socket.emit('move3D', { x: me.position.x, y: me.position.y, z: me.position.z, dir:'forward' });
-        camera3D.position.set(me.position.x, me.position.y + 8, me.position.z + 8);
-        camera3D.lookAt(me.position.x, me.position.y, me.position.z);
+      if(me3D) {
+        if(keys['ArrowLeft']) me3D.position.x -= 0.15;
+        if(keys['ArrowRight']) me3D.position.x += 0.15;
+        if(keys['ArrowUp']) me3D.position.z -= 0.15;
+        if(keys['ArrowDown']) me3D.position.z += 0.15;
+        socket.emit('move3D', { x:me3D.position.x, y:me3D.position.y, z:me3D.position.z, dir:'forward' });
+        camera3D.position.set(me3D.position.x, me3D.position.y+6, me3D.position.z+8);
+        camera3D.lookAt(me3D.position.x, me3D.position.y, me3D.position.z);
       }
       renderer3D.render(scene3D, camera3D);
       document.getElementById('hud3D').textContent = `Players: ${Object.keys(playerMeshes3D).length}`;
       requestAnimationFrame(gameLoop3D);
     }
 
-    // Handle window resize for 3D
-    window.addEventListener('resize', ()=>{
-      if(gameContainer3D.style.display === 'block') {
+    window.addEventListener('resize', () => {
+      if(gameContainer3D.style.display === 'block' && camera3D) {
         camera3D.aspect = window.innerWidth/window.innerHeight;
         camera3D.updateProjectionMatrix();
         renderer3D.setSize(window.innerWidth, window.innerHeight);
       }
     });
+
+    // Mini avatar in top bar (simple)
+    function updateMiniAvatar() {
+      const canvas = avatarMini, ctx = canvas.getContext('2d');
+      ctx.clearRect(0,0,32,32);
+      let bodyColour = '#cccccc';
+      const bodyItem = allItems.find(i => equipped.includes(i.id) && i.type==='body');
+      if(bodyItem) bodyColour = bodyItem.colour;
+      ctx.fillStyle = bodyColour; ctx.fillRect(8,14,16,10);
+      ctx.fillStyle = '#ffdbac'; ctx.fillRect(10,4,12,12);
+    }
+    setInterval(updateMiniAvatar, 2000);
   </script>
 </body>
 </html>
