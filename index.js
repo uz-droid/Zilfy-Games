@@ -16,21 +16,17 @@ if (fs.existsSync(DB_FILE)) {
 
 function saveDb() { fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2)); }
 
-// Expanded Base Catalog
 const baseCatalogItems = [
-  // Hats
   { id: 'hat1', type: 'hat', name: 'Red Cap', img: '🧢', colour: '#ff0000' },
   { id: 'hat2', type: 'hat', name: 'Crown', img: '👑', colour: '#ffd700' },
   { id: 'hat3', type: 'hat', name: 'Top Hat', img: '🎩', colour: '#111111' },
   { id: 'hat4', type: 'hat', name: 'Wizard Hat', img: '🧙', colour: '#4b0082' },
   { id: 'hat5', type: 'hat', name: 'Beanie', img: '🧣', colour: '#008080' },
-  // Faces
   { id: 'face1', type: 'face', name: 'Smile', img: '😊' },
   { id: 'face2', type: 'face', name: 'Cool', img: '😎' },
   { id: 'face3', type: 'face', name: 'Happy', img: '😄' },
   { id: 'face4', type: 'face', name: 'Surprised', img: '😮' },
   { id: 'face5', type: 'face', name: 'Wink', img: '😉' },
-  // Body Colours
   { id: 'body_red', type: 'body', name: 'Really Red', colour: '#ff4444' },
   { id: 'body_blue', type: 'body', name: 'Bright Blue', colour: '#4444ff' },
   { id: 'body_green', type: 'body', name: 'Lime Green', colour: '#44ff44' },
@@ -41,7 +37,6 @@ const baseCatalogItems = [
   { id: 'body_white', type: 'body', name: 'Ice White', colour: '#f0f0f0' },
 ];
 
-// Normalize users
 Object.values(db.users).forEach(u => {
   u.friends = u.friends || [];
   u.friendRequests = u.friendRequests || [];
@@ -51,10 +46,8 @@ Object.values(db.users).forEach(u => {
 
 let gameIdCounter = db.games.length ? Math.max(...db.games.map(g=>g.id)) + 1 : 1;
 
-// Active rooms
 const activeRooms = new Map();
 
-// Starter 2D games (same as before)
 const starter2DGames = [
   {
     id: 'obby',
@@ -91,7 +84,6 @@ const starter2DGames = [
   },
 ];
 
-// Ensure lobbies
 function ensureRoom(name, type) {
   if (!activeRooms.has(name)) {
     activeRooms.set(name, { type, players: new Map(), blockData: type==='3d'?[]:undefined, tileData: type==='2d'?[]:undefined });
@@ -133,7 +125,7 @@ function getActiveRoomList() {
 io.on('connection', (socket) => {
   console.log('Connected:', socket.id);
 
-  // –– AUTH ––
+  // ---------- AUTH ----------
   socket.on('login', ({ username, password }) => {
     if (!db.users[username]) return socket.emit('loginError', 'User not found');
     if (db.users[username].password !== password) return socket.emit('loginError', 'Wrong password');
@@ -176,7 +168,7 @@ io.on('connection', (socket) => {
     saveDb();
   });
 
-  // –– FRIENDS ––
+  // ---------- FRIENDS ----------
   socket.on('sendFriendRequest', toUser => {
     if (!socket.username) return;
     if (db.users[toUser]) {
@@ -188,6 +180,7 @@ io.on('connection', (socket) => {
       saveDb();
     }
   });
+
   socket.on('acceptFriendRequest', fromUser => {
     if (!socket.username) return;
     const user = db.users[socket.username];
@@ -201,6 +194,7 @@ io.on('connection', (socket) => {
     socket.emit('friendRequestsUpdate', user.friendRequests);
     saveDb();
   });
+
   socket.on('declineFriendRequest', fromUser => {
     if (!socket.username) return;
     const user = db.users[socket.username];
@@ -209,28 +203,39 @@ io.on('connection', (socket) => {
     socket.emit('friendRequestsUpdate', user.friendRequests);
     saveDb();
   });
+
   socket.on('searchUser', term => {
     const results = Object.keys(db.users).filter(u => u.includes(term) && u !== socket.username);
     socket.emit('searchResults', results);
   });
+
   socket.on('getProfile', username => {
     const user = db.users[username];
     if (!user) return;
     const avatar = getUserAvatar(username);
-    socket.emit('profileData', { username, online: user.online, friends: user.friends, equipped: user.equippedItems, avatar, friendCount: user.friends.length });
+    socket.emit('profileData', {
+      username,
+      online: user.online,
+      friends: user.friends,
+      equipped: user.equippedItems,
+      avatar,
+      friendCount: user.friends.length,
+    });
   });
 
-  // –– GAMES ––
+  // ---------- GAMES ----------
   socket.on('createGame', ({ name, code, type }) => {
     const game = { id: gameIdCounter++, creator: socket.username, name, code, type, created: Date.now() };
     db.games.push(game);
     io.emit('newGame', game);
     saveDb();
   });
+
   socket.on('deleteGame', gameId => {
     const idx = db.games.findIndex(g => g.id === gameId && g.creator === socket.username);
     if (idx !== -1) { db.games.splice(idx, 1); io.emit('gameDeleted', gameId); saveDb(); }
   });
+
   socket.on('hostGame', gameId => {
     const game = db.games.find(g => g.id === gameId);
     if (!game) return;
@@ -242,6 +247,7 @@ io.on('connection', (socket) => {
     socket.join(roomName);
     joinRoom(socket, roomName);
   });
+
   socket.on('joinRoom', roomName => {
     if (!activeRooms.has(roomName)) return;
     socket.join(roomName);
@@ -256,7 +262,7 @@ io.on('connection', (socket) => {
       id: socket.id,
       username: socket.username,
       x: room.type==='2d' ? 400 : (Math.random()*5+2),
-      y: room.type==='2d' ? 300 : 3,   // start slightly above ground
+      y: room.type==='2d' ? 300 : 3,
       z: room.type==='3d' ? (Math.random()*5+2) : undefined,
       dir: 'down',
       avatar,
@@ -275,7 +281,7 @@ io.on('connection', (socket) => {
     io.emit('activeRoomsUpdate', getActiveRoomList());
   }
 
-  // –– MOVEMENT ––
+  // ---------- MOVEMENT ----------
   socket.on('move3D', ({ x, y, z, dir }) => {
     const room = activeRooms.get(socket.currentRoom);
     if (!room || room.type !== '3d') return;
@@ -284,6 +290,7 @@ io.on('connection', (socket) => {
     Object.assign(p, { x, y, z, dir });
     socket.to(socket.currentRoom).emit('playerMoved3D', { id: socket.id, x, y, z, dir });
   });
+
   socket.on('move2D', ({ x, y, dir }) => {
     const room = activeRooms.get(socket.currentRoom);
     if (!room || room.type !== '2d') return;
@@ -293,7 +300,7 @@ io.on('connection', (socket) => {
     socket.to(socket.currentRoom).emit('playerMoved2D', { id: socket.id, x, y, dir });
   });
 
-  // –– BUILDING ––
+  // ---------- BUILDING ----------
   socket.on('placeBlock', ({ position, color, type: bType }) => {
     const room = activeRooms.get(socket.currentRoom);
     if (!room || room.type !== '3d') return;
@@ -301,12 +308,14 @@ io.on('connection', (socket) => {
     room.blockData.push(block);
     io.to(socket.currentRoom).emit('blockPlaced', block);
   });
+
   socket.on('removeBlock', blockId => {
     const room = activeRooms.get(socket.currentRoom);
     if (!room || room.type !== '3d') return;
     room.blockData = room.blockData.filter(b => b.id !== blockId);
     io.to(socket.currentRoom).emit('blockRemoved', blockId);
   });
+
   socket.on('placeTile', ({ position, color, width, height }) => {
     const room = activeRooms.get(socket.currentRoom);
     if (!room || room.type !== '2d') return;
@@ -314,6 +323,7 @@ io.on('connection', (socket) => {
     room.tileData.push(tile);
     io.to(socket.currentRoom).emit('tilePlaced', tile);
   });
+
   socket.on('removeTile', tileId => {
     const room = activeRooms.get(socket.currentRoom);
     if (!room || room.type !== '2d') return;
@@ -321,19 +331,74 @@ io.on('connection', (socket) => {
     io.to(socket.currentRoom).emit('tileRemoved', tileId);
   });
 
-  // –– CHAT ––
+  // ---------- CHAT ----------
   socket.on('chatMessage', ({ message, roomName }) => {
     if (!roomName || !activeRooms.has(roomName)) return;
     io.to(roomName).emit('chatMessage', { sender: socket.username, message, timestamp: Date.now() });
   });
 
-  // –– EQUIP ––
-  socket.on('equipItem', itemId => { /* ... unchanged ... */ });
-  socket.on('unequipItem', itemId => { /* ... unchanged ... */ });
+  // ---------- EQUIP ----------
+  socket.on('equipItem', itemId => {
+    if (!db.users[socket.username]) return;
+    if (!db.users[socket.username].equippedItems.includes(itemId)) {
+      db.users[socket.username].equippedItems.push(itemId);
+      socket.emit('equippedUpdate', db.users[socket.username].equippedItems);
+      saveDb();
+      const room = activeRooms.get(socket.currentRoom);
+      if (room) {
+        const avatar = getUserAvatar(socket.username);
+        const p = room.players.get(socket.id);
+        if (p) p.avatar = avatar;
+        io.to(socket.currentRoom).emit('avatarUpdate', { id: socket.id, avatar });
+      }
+    }
+  });
 
-  // –– LEAVE / DISCONNECT ––
-  socket.on('leaveRoom', () => { /* ... unchanged ... */ });
-  socket.on('disconnect', () => { /* ... unchanged ... */ });
+  socket.on('unequipItem', itemId => {
+    if (!db.users[socket.username]) return;
+    db.users[socket.username].equippedItems = db.users[socket.username].equippedItems.filter(i => i !== itemId);
+    socket.emit('equippedUpdate', db.users[socket.username].equippedItems);
+    saveDb();
+    const room = activeRooms.get(socket.currentRoom);
+    if (room) {
+      const avatar = getUserAvatar(socket.username);
+      const p = room.players.get(socket.id);
+      if (p) p.avatar = avatar;
+      io.to(socket.currentRoom).emit('avatarUpdate', { id: socket.id, avatar });
+    }
+  });
+
+  // ---------- LEAVE / DISCONNECT ----------
+  socket.on('leaveRoom', () => {
+    const room = activeRooms.get(socket.currentRoom);
+    if (room) {
+      room.players.delete(socket.id);
+      socket.to(socket.currentRoom).emit('playerLeft', socket.id);
+      if (room.players.size === 0 && !socket.currentRoom.startsWith('lobby_') && !socket.currentRoom.startsWith('starter_')) {
+        activeRooms.delete(socket.currentRoom);
+      }
+      socket.leave(socket.currentRoom);
+      socket.currentRoom = null;
+      io.emit('activeRoomsUpdate', getActiveRoomList());
+    }
+  });
+
+  socket.on('disconnect', () => {
+    const room = activeRooms.get(socket.currentRoom);
+    if (room) {
+      room.players.delete(socket.id);
+      socket.to(socket.currentRoom).emit('playerLeft', socket.id);
+      if (room.players.size === 0 && !socket.currentRoom.startsWith('lobby_') && !socket.currentRoom.startsWith('starter_')) {
+        activeRooms.delete(socket.currentRoom);
+      }
+    }
+    if (socket.username && db.users[socket.username]) {
+      db.users[socket.username].online = false;
+      notifyFriends(socket.username, 'friendOffline');
+      saveDb();
+    }
+    io.emit('activeRoomsUpdate', getActiveRoomList());
+  });
 });
 
 function notifyFriends(username, event) {
