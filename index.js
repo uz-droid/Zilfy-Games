@@ -17,8 +17,8 @@ if (fs.existsSync(DB_FILE)) {
 function saveDb() { fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2)); }
 
 const baseCatalogItems = [
-  { id: 'hat1', type: 'hat', name: 'Red Cap', img: '🧢', colour: '#ff0000' },
-  { id: 'hat2', type: 'hat', name: 'Crown', img: '👑', colour: '#ffd700' },
+  { id: 'hat1', type: 'hat', name: 'Red Cap', img: '🧢', colour: '#ff0000', model: 'cap' },
+  { id: 'hat2', type: 'hat', name: 'Crown', img: '👑', colour: '#ffd700', model: 'crown' },
   { id: 'face1', type: 'face', name: 'Smile', img: '😊' },
   { id: 'face2', type: 'face', name: 'Cool', img: '😎' },
   { id: 'body_red', type: 'body', name: 'Red Body', colour: '#ff4444' },
@@ -36,12 +36,71 @@ Object.values(db.users).forEach(u => {
 
 let gameIdCounter = db.games.length ? Math.max(...db.games.map(g=>g.id)) + 1 : 1;
 
-// Room system: each room has type '2d' or '3d', players map, blockData (for 3D) or tileData (for 2D)
+// ========== Active rooms ==========
 const activeRooms = new Map();
-const default2DRoom = '2d_lobby';
-const default3DRoom = '3d_lobby';
-activeRooms.set(default2DRoom, { type: '2d', players: new Map(), tileData: [] });
-activeRooms.set(default3DRoom, { type: '3d', players: new Map(), blockData: [] });
+
+// Pre‑built starter 2D games (always available)
+const starter2DGames = [
+  {
+    id: 'obby',
+    name: '🎯 Classic Obby',
+    description: 'Jump on platforms!',
+    tileData: [
+      { id: '1', position: {x:100, y:500}, color: '#44ff44', width:200, height:20 },
+      { id: '2', position: {x:300, y:350}, color: '#ff44ff', width:20, height:150 },
+      { id: '3', position: {x:500, y:400}, color: '#ffaa00', width:20, height:50 },
+      { id: '4', position: {x:600, y:200}, color: '#ff4444', width:200, height:20 }
+    ]
+  },
+  {
+    id: 'tycoon',
+    name: '🏭 Money Tycoon',
+    description: 'Collect cash drops!',
+    tileData: [
+      { id: 't1', position: {x:200, y:300}, color: '#ffff44', width:60, height:60 },
+      { id: 't2', position: {x:400, y:100}, color: '#ffff44', width:60, height:60 },
+      { id: 't3', position: {x:600, y:450}, color: '#ffff44', width:60, height:60 },
+      { id: 't4', position: {x:100, y:100}, color: '#ffff44', width:60, height:60 }
+    ]
+  },
+  {
+    id: 'paintball',
+    name: '🎨 Paintball Arena',
+    description: 'Shoot paint everywhere!',
+    tileData: [
+      { id: 'p1', position: {x:50, y:50}, color: '#22cc22', width:10, height:500 },
+      { id: 'p2', position: {x:750, y:50}, color: '#22cc22', width:10, height:500 },
+      { id: 'p3', position: {x:50, y:50}, color: '#22cc22', width:700, height:10 },
+      { id: 'p4', position: {x:50, y:550}, color: '#22cc22', width:700, height:10 }
+    ]
+  }
+];
+
+// Lobby rooms
+function ensureRoom(name, type) {
+  if (!activeRooms.has(name)) {
+    activeRooms.set(name, {
+      type,
+      players: new Map(),
+      blockData: type === '3d' ? [] : undefined,
+      tileData: type === '2d' ? [] : undefined
+    });
+  }
+}
+ensureRoom('lobby_2d', '2d');
+ensureRoom('lobby_3d', '3d');
+
+// Populate starter 2D games into rooms (do it once)
+starter2DGames.forEach(g => {
+  const roomName = 'starter_' + g.id;
+  if (!activeRooms.has(roomName)) {
+    activeRooms.set(roomName, {
+      type: '2d',
+      players: new Map(),
+      tileData: JSON.parse(JSON.stringify(g.tileData))
+    });
+  }
+});
 
 function getUserAvatar(username) {
   const user = db.users[username];
@@ -60,11 +119,15 @@ function getUserAvatar(username) {
 }
 
 function getActiveRoomList() {
-  return Array.from(activeRooms.entries()).map(([name, room]) => ({
-    name,
-    type: room.type,
-    playerCount: room.players.size,
-  }));
+  return Array.from(activeRooms.keys()).map(name => {
+    const room = activeRooms.get(name);
+    return {
+      name,
+      type: room.type,
+      playerCount: room.players.size,
+      isStarter: name.startsWith('starter_')
+    };
+  });
 }
 
 io.on('connection', (socket) => {
@@ -85,6 +148,7 @@ io.on('connection', (socket) => {
       catalogItems: allCatalog,
       equipped: db.users[username].equippedItems || [],
       activeRooms: getActiveRoomList(),
+      starter2D: starter2DGames.map(g => ({ id: g.id, name: g.name, description: g.description }))
     });
     notifyFriends(username, 'friendOnline');
     saveDb();
@@ -105,6 +169,7 @@ io.on('connection', (socket) => {
       catalogItems: allCatalog,
       equipped: ['body_red'],
       activeRooms: getActiveRoomList(),
+      starter2D: starter2DGames.map(g => ({ id: g.id, name: g.name, description: g.description }))
     });
     saveDb();
   });
@@ -138,14 +203,14 @@ io.on('connection', (socket) => {
     if (idx !== -1) { db.games.splice(idx, 1); io.emit('gameDeleted', gameId); saveDb(); }
   });
 
-  // Launch (host) a game → create room
+  // Host a game from creation
   socket.on('hostGame', gameId => {
     const game = db.games.find(g => g.id === gameId);
     if (!game) return;
     const roomName = game.creator + '_' + game.name.replace(/\s/g, '_');
     if (activeRooms.has(roomName)) return socket.emit('joinRoom', roomName);
     const type = game.type || '3d';
-    activeRooms.set(roomName, { type, players: new Map(), blockData: [], tileData: [] });
+    activeRooms.set(roomName, { type, players: new Map(), blockData: type==='3d'?[]:undefined, tileData: type==='2d'?[]:undefined });
     io.emit('activeRoomsUpdate', getActiveRoomList());
     socket.join(roomName);
     joinRoom(socket, roomName);
@@ -165,9 +230,11 @@ io.on('connection', (socket) => {
     const playerData = {
       id: socket.id,
       username: socket.username,
-      x: Math.random() * 10 + 0, y: 0, z: Math.random() * 10 + 0,
+      x: room.type==='2d' ? 400 : Math.random()*10,
+      y: room.type==='2d' ? 300 : 0,
+      z: room.type==='3d' ? Math.random()*10 : undefined,
       dir: 'down',
-      avatar,
+      avatar
     };
     room.players.set(socket.id, playerData);
     socket.emit('roomJoined', {
@@ -176,13 +243,14 @@ io.on('connection', (socket) => {
       players: Array.from(room.players.values()),
       blockData: room.blockData || [],
       tileData: room.tileData || [],
+      isStarter: roomName.startsWith('starter_')
     });
     socket.to(roomName).emit('playerJoined', playerData);
     socket.currentRoom = roomName;
     io.emit('activeRoomsUpdate', getActiveRoomList());
   }
 
-  // Movement (2D or 3D)
+  // Movement
   socket.on('move3D', ({ x, y, z, dir }) => {
     const room = activeRooms.get(socket.currentRoom);
     if (!room || room.type !== '3d') return;
@@ -201,11 +269,11 @@ io.on('connection', (socket) => {
     socket.to(socket.currentRoom).emit('playerMoved2D', { id: socket.id, x, y, dir });
   });
 
-  // Building
-  socket.on('placeBlock', ({ position, color, type: blockType }) => {
+  // Building (2D tiles / 3D blocks)
+  socket.on('placeBlock', ({ position, color, type: bType }) => {
     const room = activeRooms.get(socket.currentRoom);
     if (!room || room.type !== '3d') return;
-    const block = { id: Date.now() + Math.random(), position, color, type: blockType };
+    const block = { id: Date.now() + Math.random(), position, color, type: bType };
     room.blockData.push(block);
     io.to(socket.currentRoom).emit('blockPlaced', block);
   });
@@ -216,10 +284,10 @@ io.on('connection', (socket) => {
     io.to(socket.currentRoom).emit('blockRemoved', blockId);
   });
 
-  socket.on('placeTile', ({ position, color }) => {
+  socket.on('placeTile', ({ position, color, width=20, height=20 }) => {
     const room = activeRooms.get(socket.currentRoom);
     if (!room || room.type !== '2d') return;
-    const tile = { id: Date.now() + Math.random(), position, color };
+    const tile = { id: Date.now() + Math.random(), position, color, width, height };
     room.tileData.push(tile);
     io.to(socket.currentRoom).emit('tilePlaced', tile);
   });
@@ -230,6 +298,16 @@ io.on('connection', (socket) => {
     io.to(socket.currentRoom).emit('tileRemoved', tileId);
   });
 
+  // Chat
+  socket.on('chatMessage', ({ message, roomName }) => {
+    if (!roomName || !activeRooms.has(roomName)) return;
+    io.to(roomName).emit('chatMessage', {
+      sender: socket.username,
+      message,
+      timestamp: Date.now()
+    });
+  });
+
   // Equip
   socket.on('equipItem', itemId => {
     if (!db.users[socket.username]) return;
@@ -237,24 +315,7 @@ io.on('connection', (socket) => {
       db.users[socket.username].equippedItems.push(itemId);
       socket.emit('equippedUpdate', db.users[socket.username].equippedItems);
       saveDb();
-      // Update avatar in current room
-      if (socket.currentRoom) {
-        const room = activeRooms.get(socket.currentRoom);
-        if (room) {
-          const avatar = getUserAvatar(socket.username);
-          const p = room.players.get(socket.id);
-          if (p) { p.avatar = avatar; }
-          io.to(socket.currentRoom).emit('avatarUpdate', { id: socket.id, avatar });
-        }
-      }
-    }
-  });
-  socket.on('unequipItem', itemId => {
-    if (!db.users[socket.username]) return;
-    db.users[socket.username].equippedItems = db.users[socket.username].equippedItems.filter(i => i !== itemId);
-    socket.emit('equippedUpdate', db.users[socket.username].equippedItems);
-    saveDb();
-    if (socket.currentRoom) {
+      // Broadcast avatar update in room
       const room = activeRooms.get(socket.currentRoom);
       if (room) {
         const avatar = getUserAvatar(socket.username);
@@ -264,6 +325,19 @@ io.on('connection', (socket) => {
       }
     }
   });
+  socket.on('unequipItem', itemId => {
+    if (!db.users[socket.username]) return;
+    db.users[socket.username].equippedItems = db.users[socket.username].equippedItems.filter(i => i !== itemId);
+    socket.emit('equippedUpdate', db.users[socket.username].equippedItems);
+    saveDb();
+    const room = activeRooms.get(socket.currentRoom);
+    if (room) {
+      const avatar = getUserAvatar(socket.username);
+      const p = room.players.get(socket.id);
+      if (p) p.avatar = avatar;
+      io.to(socket.currentRoom).emit('avatarUpdate', { id: socket.id, avatar });
+    }
+  });
 
   // Leave room
   socket.on('leaveRoom', () => {
@@ -271,7 +345,7 @@ io.on('connection', (socket) => {
     if (room) {
       room.players.delete(socket.id);
       socket.to(socket.currentRoom).emit('playerLeft', socket.id);
-      if (room.players.size === 0 && socket.currentRoom !== default2DRoom && socket.currentRoom !== default3DRoom) {
+      if (room.players.size === 0 && !socket.currentRoom.startsWith('lobby_') && !socket.currentRoom.startsWith('starter_')) {
         activeRooms.delete(socket.currentRoom);
       }
       socket.leave(socket.currentRoom);
@@ -286,7 +360,7 @@ io.on('connection', (socket) => {
     if (room) {
       room.players.delete(socket.id);
       socket.to(socket.currentRoom).emit('playerLeft', socket.id);
-      if (room.players.size === 0 && socket.currentRoom !== default2DRoom && socket.currentRoom !== default3DRoom) {
+      if (room.players.size === 0 && !socket.currentRoom.startsWith('lobby_') && !socket.currentRoom.startsWith('starter_')) {
         activeRooms.delete(socket.currentRoom);
       }
     }
